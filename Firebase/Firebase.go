@@ -15,7 +15,7 @@ var ClientOpts option.ClientOption
 
 // InitializeFirebase - initialise firebase
 func InitializeFirebase () {
-	ClientOpts = option.WithCredentialsFile("ipl-auction-94401-firebase-adminsdk-v595g-e957ce8795.json")
+	ClientOpts = option.WithCredentialsFile("filename")
 	config := &firebase.Config {
 		DatabaseURL: "https://ipl-auction-94401.firebaseio.com",
   		StorageBucket: "ipl-auction-94401.appspot.com",
