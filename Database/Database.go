@@ -4,6 +4,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"ipl/models"
+	"fmt"
 )
 
 // Db Database
@@ -27,4 +28,9 @@ func InitialiseDatabase () {
 	db.Debug().AutoMigrate(&models.Auction{})
 	db.Debug().AutoMigrate(&models.Bid{})
 
+}
+
+func BidWatchDogFucntion() {
+	Db.Exec("SELECT stopbid();");
+	fmt.Print("Executed");
 }

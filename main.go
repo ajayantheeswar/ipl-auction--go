@@ -1,12 +1,15 @@
 package main
 
 import (
-	
+	"github.com/gin-contrib/cors"
 	"ipl/database"
 	"github.com/gin-gonic/gin"
 	"ipl/controllers"
 	"ipl/middleware"
 	"ipl/firebase"
+
+	"time"
+	"fmt"
 
 )
 
@@ -19,6 +22,14 @@ func Initialize() {
 func main() {
 	Initialize()
 	router := gin.Default();
+
+	router.Use(cors.New(cors.Config{
+        AllowOrigins:     []string{"*"},
+        AllowMethods:     []string{"PUT", "PATCH","POST","GET","DELETE"},
+        AllowHeaders:     []string{"Origin","Content-Length","Content-Type","Authorization","AuthType"},
+        ExposeHeaders:    []string{"Content-Length"},
+        AllowCredentials: true,
+    }))
 
 	admin := router.Group("/admin")
 	{
@@ -44,5 +55,18 @@ func main() {
 		userRoutes.POST("/get-auction",controllers.UserGetAuction);
 		userRoutes.POST("/get-user-auctions",controllers.UserGetAllUserAuction)
 	}
+
+	go func (){
+		for _ = range time.Tick(10 * time.Second) { 
+			go database.BidWatchDogFucntion()
+			fmt.Printf("Exec")
+		 }
+	}()
+
+
 	router.Run(":3002");
+
+	
+	
+
 }

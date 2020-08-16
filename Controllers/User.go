@@ -17,6 +17,7 @@ func SignUpUser(c *gin.Context) {
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Auth Status" : "FAIL"})
+		panic(err)
 		return
 	}
 
@@ -27,6 +28,7 @@ func SignUpUser(c *gin.Context) {
 		
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Auth Status": "FAIL"})
+			panic(err)
 			return
 		}
 		user.Email = Payload.Claims["email"].(string)
@@ -36,6 +38,7 @@ func SignUpUser(c *gin.Context) {
 		encodedPassword, err := utils.HashPassword(requestBody.Password)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Auth Status": "FAIL"})
+			panic(err)
 			return
 		}
 		user.Email = requestBody.Email
@@ -55,9 +58,11 @@ func SignUpUser(c *gin.Context) {
 		token, err:= utils.CreateToken(fmt.Sprint(user.ID))
 		if err != nil{
 			c.JSON(http.StatusBadRequest, gin.H{"Auth Status" : "FAIL"})
+			panic(err)
+			return
 		}
 		c.JSON(http.StatusOK, gin.H{"Token" : token,
-            "name" : user.Name , "email" : user.Email,
+            "Name" : user.Name , "Email" : user.Email,
         })
 	}
 
@@ -68,6 +73,7 @@ func SignInUser(c *gin.Context) {
 	var requestBody POJOSignIN
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
+		panic(err)
 		c.JSON(http.StatusBadRequest, gin.H{"Auth Status": "FAIL"})
 		return
 	}
@@ -75,9 +81,9 @@ func SignInUser(c *gin.Context) {
 
 	if (requestBody.AuthType == "Google"){
 		Payload,err := utils.VerifyIDToken(requestBody.Token)
-		
 		if err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"Auth Status": "FAIL"})
+			panic(err)
 			return
 		}
 		requestBody.Email = Payload.Claims["email"].(string)
@@ -89,6 +95,7 @@ func SignInUser(c *gin.Context) {
 	if gorm.IsRecordNotFoundError(err) {
 		// User Does Not EXISTS ... RETURN
 		c.JSON(http.StatusForbidden, gin.H{"Auth Status": "FAIL", "error": "Invalid Credientials"})
+		panic(err)
 		return
 	} else {
 		// User Exists
@@ -102,9 +109,11 @@ func SignInUser(c *gin.Context) {
 		token, err := utils.CreateToken(fmt.Sprint(user.ID))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Auth Status": "FAIL"})
+			panic(err)
+			return
 		}
 		c.JSON(http.StatusOK, gin.H{"Token": token,
-			"name": user.Name, "email": user.Email,
+			"Name": user.Name, "Email": user.Email,
 		})
 	}
 }
@@ -130,6 +139,7 @@ func UserCreateBid(c *gin.Context) {
 			Name : user.Name,
 		} 
 	
+	Bid.Time = getTime()
 	err = database.Db.Create(&Bid).Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Status" : "Creation Failed"})
@@ -179,13 +189,14 @@ func UserGetAuction(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"Status": "Request FAILED"})	
 	}
 
-	var Auctions []models.Auction
-	err = database.Db.Debug().Preload("Bids").Where(models.Bid{UserID : user.ID}).Find(&Auctions).Error
+	var Auction models.Auction
+	err = database.Db.Debug().Preload("Bids","user_id = ?",user.ID).First(&Auction,requestBody.AuctionID).Error
 	if err != nil{
 		c.JSON(http.StatusBadRequest, gin.H{"Status": "Fetch FAILED"})	
+		panic(err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"Auctions": Auctions});
+	c.JSON(http.StatusOK, gin.H{"Auction": Auction});
 
 }
 

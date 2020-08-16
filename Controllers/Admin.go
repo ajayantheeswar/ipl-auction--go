@@ -20,9 +20,8 @@ type POJOSignUP struct {
 	Name     string
 	Email    string
 	Password string
-	IsAdmin  string
 	AuthType string
-	Token string
+	Token    string `json:",omitempty"`
 }
 
 func SignUpAdmin(c *gin.Context) {
@@ -30,26 +29,28 @@ func SignUpAdmin(c *gin.Context) {
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Auth Status": "FAIL"})
+		panic(err)
 		return
 	}
 
-	
 	var user = models.AdminUser{}
 
-	if (requestBody.AuthType == "Google"){
-		Payload,err := utils.VerifyIDToken(requestBody.Token)
-		
+	if requestBody.AuthType == "Google" {
+		Payload, err := utils.VerifyIDToken(requestBody.Token)
+
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Auth Status": "FAIL"})
+			panic(err)
 			return
 		}
 		user.Email = Payload.Claims["email"].(string)
 		user.Name = Payload.Claims["name"].(string)
 		user.AuthType = "Google"
-	}else{
+	} else {
 		encodedPassword, err := utils.HashPassword(requestBody.Password)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Auth Status": "FAIL"})
+			panic(err)
 			return
 		}
 		user.Email = requestBody.Email
@@ -63,14 +64,18 @@ func SignUpAdmin(c *gin.Context) {
 	if err != nil {
 		// User EXISTS ... RETURN
 		c.JSON(http.StatusConflict, gin.H{"Auth Status": "FAIL", "error": "The Account Already Exists"})
+		panic(err)
+		return
 	} else {
 		// User Not Exists
 		token, err := utils.CreateToken(fmt.Sprint(user.ID))
 		if err != nil {
+			panic(err)
 			c.JSON(http.StatusBadRequest, gin.H{"Auth Status": "FAIL"})
+			return
 		}
 		c.JSON(http.StatusOK, gin.H{"Token": token,
-			"name": user.Name, "email": user.Email,
+			"Name": user.Name, "Email": user.Email,
 		})
 	}
 
@@ -80,7 +85,7 @@ type POJOSignIN struct {
 	Email    string
 	Password string
 	AuthType string
-	Token string
+	Token    string `json:",omitempty"`
 }
 
 func SignInAdmin(c *gin.Context) {
@@ -88,16 +93,18 @@ func SignInAdmin(c *gin.Context) {
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Auth Status": "FAIL"})
+		panic(err)
 		return
 	}
 
 	var user models.AdminUser
 
-	if (requestBody.AuthType == "Google"){
-		Payload,err := utils.VerifyIDToken(requestBody.Token)
-		
+	if requestBody.AuthType == "Google" {
+		Payload, err := utils.VerifyIDToken(requestBody.Token)
+
 		if err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"Auth Status": "FAIL"})
+			panic(err)
 			return
 		}
 		requestBody.Email = Payload.Claims["email"].(string)
@@ -108,33 +115,38 @@ func SignInAdmin(c *gin.Context) {
 	if gorm.IsRecordNotFoundError(err) {
 		// User Does Not EXISTS ... RETURN
 		c.JSON(http.StatusForbidden, gin.H{"Auth Status": "FAIL", "error": "Invalid Credientials"})
+		panic(err)
 		return
 	} else {
 		// User Exists
-		if(requestBody.AuthType != "Google"){
+		if requestBody.AuthType != "Google" {
 			if !utils.CheckPasswordHash(requestBody.Password, user.Password) {
 				// Invalid Credientials
 				c.JSON(http.StatusForbidden, gin.H{"Auth Status": "FAIL", "error": "Invalid Credientials"})
+				panic(err)
 				return
 			}
 		}
 		token, err := utils.CreateToken(fmt.Sprint(user.ID))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"Auth Status": "FAIL"})
+			panic(err)
+			return
 		}
 		c.JSON(http.StatusOK, gin.H{"Token": token,
-			"name": user.Name, "email": user.Email,
+			"Name": user.Name, "Email": user.Email,
 		})
 	}
 }
 
 type POJOCreateAuction struct {
-	Name         string `form:"name" binding:"required"`
-	BattingStyle string `form:"battingStyle" binding:"required"`
-	Average      string `form:"average" binding:"required"`
-	Role         string `form:"role" binding:"required"`
-	Start        uint64 `form:"start" binding:"required"`
-	End          uint64 `form:"end" binding:"required"`
+	Name         string `form:"Name" binding:"required"`
+	BattingStyle string `form:"BattingStyle" binding:"required"`
+	Average      string `form:"Average" binding:"required"`
+	Role         string `form:"Role" binding:"required"`
+	Country      string `form:"Country" binding:"required"`
+	Start        uint64 `form:"Start" binding:"required"`
+	End          uint64 `form:"End" binding:"required"`
 }
 
 // CereateAuction - USES FORM DATA
@@ -145,10 +157,11 @@ func CreateAuction(c *gin.Context) {
 	var form POJOCreateAuction
 	var auction models.Auction
 
-	file, err := c.FormFile("profile")
+	file, err := c.FormFile("Profile")
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Status": "File FAILED"})
+		panic(err)
 		return
 	}
 
@@ -156,6 +169,7 @@ func CreateAuction(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Status": "Form FAILED"})
+		panic(err)
 		return
 	}
 
@@ -163,6 +177,7 @@ func CreateAuction(c *gin.Context) {
 	url, err := UploadFile(file)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Status": "Upload FAILED"})
+		panic(err)
 		return
 	}
 	getAuctionFromForm(&auction, &form)
@@ -173,6 +188,7 @@ func CreateAuction(c *gin.Context) {
 	err = database.Db.Debug().Create(&auction).Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Status": "Upload FAILED"})
+		panic(err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"Status": "Auction Created Successfully !"})
@@ -209,20 +225,20 @@ func getAuctionFromForm(Auction *models.Auction, form *POJOCreateAuction) {
 	Auction.End = form.End
 }
 
-
-// 
+//
 
 func AdminGetAllAuctions(c *gin.Context) {
 	user := c.Request.Context().Value("UserId").(models.AdminUser)
 
-	var Auctions [] models.Auction
+	var Auctions []models.Auction
 
-	err := database.Db.Debug().Where(models.Auction{AdminUserID : user.ID}).Find(&Auctions).Error
-	if err != nil{
-		c.JSON(http.StatusBadRequest, gin.H{"Status": "Fetch FAILED"})	
+	err := database.Db.Debug().Where(models.Auction{AdminUserID: user.ID}).Find(&Auctions).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Status": "Fetch FAILED"})
+		panic(err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"Auctions": Auctions});
+	c.JSON(http.StatusOK, gin.H{"Auctions": Auctions})
 
 }
 
@@ -235,15 +251,18 @@ func AdminGetAuction(c *gin.Context) {
 	var requestBody POJOAdminGetAuction
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Status": "Request FAILED"})	
+		c.JSON(http.StatusBadRequest, gin.H{"Status": "Request FAILED"})
+		panic(err)
+		return
 	}
 	var Auction models.Auction
 
-	err = database.Db.Debug().Preload("Bids").First(&Auction,requestBody.AuctionID).Error
-	if err != nil{
-		c.JSON(http.StatusBadRequest, gin.H{"Status": "Fetch FAILED"})	
+	err = database.Db.Debug().Preload("Bids").First(&Auction, requestBody.AuctionID).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Status": "Fetch FAILED"})
+		panic(err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"Auctions": Auction});
+	c.JSON(http.StatusOK, gin.H{"Auction": Auction})
 
 }
