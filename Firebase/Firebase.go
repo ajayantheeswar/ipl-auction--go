@@ -17,8 +17,8 @@ var ClientOpts option.ClientOption
 func InitializeFirebase () {
 	ClientOpts = option.WithCredentialsFile("filename")
 	config := &firebase.Config {
-		DatabaseURL: "https://ipl-auction-94401.firebaseio.com",
-  		StorageBucket: "ipl-auction-94401.appspot.com",
+		DatabaseURL: "DBURL",
+  		StorageBucket: "StorageURL",
 	}
 
 	app, err := firebase.NewApp(context.Background(), config, ClientOpts)
