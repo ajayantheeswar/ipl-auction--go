@@ -1,0 +1,41 @@
+POST http://localhost:3002/user/signup 
+Content-Type: application/json
+
+{
+    "Name" : "AJAY",
+    "Email" : "ajaysiva@gmail.com",
+    "Password" : "Abinaya",
+    "authType" : "MAT"
+}
+###
+POST http://localhost:3002/user/signin 
+Content-Type: application/json
+
+{
+    "Name" : "AJAY",
+    "Email" : "ajaysiva@gmail.com",
+    "Password" : "Abinaya"
+}
+
+###
+POST http://localhost:3002/user/create-bid
+Content-Type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSJ9.dd2ZJ-AOy2D_zmOhh2xtiWZAvR3s07Jn8mxxYGB_mRs
+authType: HM
+
+{
+    "Amount" : 20.1,
+    "AuctionID" : 1
+}
+
+###
+POST http://localhost:3002/user/get-all-auctions
+Content-Type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSJ9.dd2ZJ-AOy2D_zmOhh2xtiWZAvR3s07Jn8mxxYGB_mRs
+authType: HM
+
+{
+    "AuctionID" : 1
+}
+
+
