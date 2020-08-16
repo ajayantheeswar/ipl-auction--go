@@ -11,7 +11,7 @@ import (
 var Db *gorm.DB
 
 func InitialiseDatabase () {
-	db, err := gorm.Open("postgres", "host=ruby.db.elephantsql.com port=5432 user=ojunfuvj dbname=ojunfuvj password=Pyvn5R4UiPD3o-_-rLO6hHBrrCPDnpzW")
+	db, err := gorm.Open("postgres", "host port=5432 user= dbname= password=")
   	if err != nil {
 		panic(err)
 	}else{
